@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Descarga — Controle de Descarregamento</title>
+<meta name="description" content="Controle de cargas, produtos, revendas e parceiros, com relatório de frete e premiação.">
+<meta name="theme-color" content="#123D2E">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Descarga">
+<style>
+  :root{
+    --ink:#16211c;
+    --ink-soft:#5b6b62;
+    --ink-faint:#8b988f;
+    --paper:#f4f5f2;
+    --card:#ffffff;
+    --line:#e4e7e2;
+    --brand:#123d2e;
+    --brand-2:#1d5c46;
+    --brand-tint:#e7f0ea;
+    --accent:#e8672b;
+    --accent-tint:#fdece1;
+    --danger:#c1443a;
+    --danger-tint:#fbeae8;
+    --gold:#a9791f;
+    --gold-tint:#faf3df;
+    --radius-l:18px;
+    --radius-m:12px;
+    --radius-s:8px;
+    --shadow: 0 1px 2px rgba(22,33,28,0.06), 0 6px 16px -8px rgba(22,33,28,0.12);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:520px;margin:0 auto;min-height:100%;position:relative;padding-bottom:calc(84px + var(--safe-b));}
+  button,input,select{font-family:inherit;}
+  button{touch-action:manipulation;}
+  :focus-visible{outline:2px solid var(--brand-2);outline-offset:2px;}
+
+  header{
+    background:linear-gradient(165deg,var(--brand) 0%,var(--brand-2) 100%);
+    color:#fff;
+    padding:calc(16px + var(--safe-t)) 18px 18px;
+    position:sticky; top:0; z-index:15;
+  }
+  header .row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  header h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-0.01em;}
+  header p{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,0.72);}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;flex:none;}
+
+  #installBtn{
+    display:none;
+    align-items:center;gap:6px;
+    background:rgba(255,255,255,0.16);
+    border:1px solid rgba(255,255,255,0.28);
+    color:#fff;font-size:12px;font-weight:600;
+    padding:7px 11px;border-radius:100px;cursor:pointer;
+  }
+  #installBtn.show{display:inline-flex;}
+
+  main{padding:14px 14px 4px;}
+
+  /* ---- summary strip ---- */
+  .summary{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);
+    margin-bottom:12px;overflow:hidden;
+  }
+  .summary .cell{padding:10px 8px;text-align:center;border-right:1px solid var(--line);}
+  .summary .cell:last-child{border-right:none;}
+  .summary .num{font-size:16px;font-weight:700;color:var(--brand);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;}
+  .summary .lbl{font-size:10.5px;color:var(--ink-soft);margin-top:1px;}
+
+  /* ---- top action bar ---- */
+  .top-actions{display:flex;gap:8px;margin-bottom:10px;}
+  .btn-acao{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+    background:var(--card);color:var(--brand);border:1px solid var(--line);
+    padding:10px;border-radius:var(--radius-s);font-weight:600;font-size:13px;cursor:pointer;
+  }
+  .btn-acao.primary{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .btn-acao svg{width:16px;height:16px;flex:none;}
+
+  .filtro-panel{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);
+    padding:12px;margin-bottom:12px;display:none;
+  }
+  .filtro-panel.show{display:block;}
+  .filtro-panel .row2{margin-bottom:0;}
+  .filtro-actions{display:flex;gap:8px;margin-top:10px;}
+  .filtro-actions button{flex:1;padding:8px;border-radius:var(--radius-s);border:1px solid var(--line);background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink-soft);}
+  .filtro-actions button.aplicar{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .filtro-chip{
+    display:inline-flex;align-items:center;gap:6px;background:var(--accent-tint);color:var(--accent);
+    font-size:12px;font-weight:600;padding:5px 10px;border-radius:100px;margin-bottom:10px;border:none;cursor:pointer;
+  }
+  .filtro-chip svg{width:12px;height:12px;}
+
+  .empty{
+    text-align:center;color:var(--ink-faint);font-size:13.5px;
+    padding:52px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  }
+  .empty svg{width:40px;height:40px;color:var(--ink-faint);opacity:0.6;}
+  .empty b{color:var(--ink-soft);font-size:14.5px;font-weight:600;}
+
+  /* ---- cargo card ---- */
+  .card{
+    background:var(--card);border-radius:var(--radius-l);
+    margin-bottom:10px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--line);
+  }
+  .card-top{padding:13px 14px 10px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
+  .card-title{font-weight:700;font-size:15px;letter-spacing:-0.01em;}
+  .card-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .pill{
+    font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:100px;white-space:nowrap;
+    text-transform:uppercase;letter-spacing:0.03em;
+  }
+  .pill.manha{background:var(--gold-tint);color:var(--gold);}
+  .pill.tarde{background:var(--accent-tint);color:var(--accent);}
+  .pill.noite{background:#e9ebf5;color:#3d4a91;}
+
+  .card-body{padding:0 14px 12px;}
+  .card-parceiro{font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;}
+  .card-parceiro b{color:var(--ink);}
+  .itens-list{border-top:1px dashed var(--line);padding-top:8px;display:grid;gap:3px;}
+  .prod-item{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink);}
+  .prod-item span:first-child{color:var(--ink-soft);}
+  .prod-item b{font-variant-numeric:tabular-nums;}
+  .card-obs{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12px;color:var(--ink-soft);font-style:italic;white-space:pre-line;}
+
+  .card-footer{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--paper);padding:9px 14px;border-top:1px solid var(--line);
+  }
+  .card-totais{display:flex;gap:14px;font-size:11.5px;color:var(--ink-soft);}
+  .card-totais b{color:var(--brand);font-size:13px;font-variant-numeric:tabular-nums;}
+  .card-actions{display:flex;gap:4px;}
+  .icon-btn{
+    display:flex;align-items:center;justify-content:center;
+    width:32px;height:32px;border-radius:9px;border:none;background:transparent;cursor:pointer;color:var(--ink-soft);
+  }
+  .icon-btn svg{width:17px;height:17px;}
+  .icon-btn.wpp{color:#1fa855;}
+  .icon-btn.del{color:var(--danger);}
+  .icon-btn:active{background:var(--line);}
+
+  /* ---- simple list (produtos/revendas/parceiros) ---- */
+  .simple-item{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--card);padding:12px 14px;border-radius:var(--radius-m);
+    margin-bottom:8px;border:1px solid var(--line);gap:8px;
+  }
+  .simple-item .info span{font-size:14px;font-weight:600;display:block;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+  .chip{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:100px;background:var(--brand-tint);color:var(--brand);}
+  .chip.gold{background:var(--gold-tint);color:var(--gold);}
+  .simple-item .acts{display:flex;gap:2px;flex:none;}
+
+  /* ---- forms / empresa ---- */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-l);padding:16px;box-shadow:var(--shadow);}
+  .panel h2{margin:0 0 4px;font-size:16px;letter-spacing:-0.01em;}
+  .panel .hint{font-size:12px;color:var(--ink-soft);margin-bottom:14px;}
+  .about-line{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);padding:9px 0;border-top:1px solid var(--line);}
+  .about-line:first-of-type{border-top:none;}
+
+  .fab{
+    position:fixed;bottom:calc(78px + var(--safe-b));left:50%;
+    transform:translateX(200px);
+    background:var(--accent);color:#fff;width:56px;height:56px;border-radius:18px;
+    border:none;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px -4px rgba(232,103,43,0.55);cursor:pointer;z-index:12;
+  }
+  .fab svg{width:24px;height:24px;}
+  @media (max-width:520px){ .fab{left:auto;right:16px;transform:none;} }
+
+  nav.tabbar{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:520px;background:#fff;border-top:1px solid var(--line);
+    display:flex;z-index:12;padding-bottom:var(--safe-b);
+  }
+  nav.tabbar button{
+    flex:1;background:none;border:none;padding:9px 2px 8px;font-size:10.5px;
+    color:var(--ink-faint);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:600;
+  }
+  nav.tabbar button svg{width:20px;height:20px;}
+  nav.tabbar button.active{color:var(--brand);}
+
+  /* ---- Modal ---- */
+  .overlay{
+    display:none;position:fixed;inset:0;background:rgba(15,20,17,0.45);z-index:30;
+    align-items:flex-end;justify-content:center;
+  }
+  .overlay.show{display:flex;}
+  .sheet{
+    background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;
+    padding:18px 18px calc(18px + var(--safe-b));max-height:90vh;overflow-y:auto;
+    animation:sheetUp .22s ease-out;
+  }
+  @keyframes sheetUp{from{transform:translateY(24px);opacity:0.4;}to{transform:translateY(0);opacity:1;}}
+  .sheet-handle{width:36px;height:4px;background:var(--line);border-radius:100px;margin:0 auto 14px;}
+  .sheet h2{margin:0 0 14px;font-size:17px;letter-spacing:-0.01em;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:600;}
+  .field input,.field select,.field textarea{
+    width:100%;padding:11px 12px;border-radius:var(--radius-s);border:1px solid var(--line);
+    font-size:14.5px;background:var(--paper);color:var(--ink);font-family:inherit;
+  }
+  .field textarea{resize:vertical;min-height:44px;}
+  .field input:focus,.field select:focus,.field textarea:focus{background:#fff;border-color:var(--brand-2);}
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;}
+
+  .prod-linha{
+    display:flex;gap:8px;align-items:center;margin-bottom:8px;
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius-s);padding:6px;
+  }
+  .prod-linha select{flex:2;border:none;background:transparent;padding:6px 4px;font-size:13.5px;}
+  .prod-linha input{flex:1;border:none;background:transparent;padding:6px 4px;font-size:13.5px;min-width:0;}
+  .prod-linha .del-linha{
+    flex:none;width:28px;height:28px;border:none;background:var(--danger-tint);color:var(--danger);
+    border-radius:8px;font-size:16px;cursor:pointer;line-height:1;
+  }
+  .itens-box{background:var(--paper);padding:12px;border-radius:var(--radius-m);margin-bottom:12px;}
+  .itens-box > label{font-weight:700;margin-bottom:8px;display:block;font-size:13px;}
+  .btn-add-linha{
+    background:#fff;border:1px dashed var(--ink-faint);color:var(--brand);padding:9px;border-radius:var(--radius-s);
+    font-size:12.5px;cursor:pointer;font-weight:600;width:100%;margin-top:2px;
+  }
+  .reg-preview{
+    display:flex;justify-content:space-between;background:var(--brand-tint);color:var(--brand);
+    padding:10px 12px;border-radius:var(--radius-s);font-size:12.5px;font-weight:700;margin-bottom:8px;
+  }
+  .reg-preview.parceiro{background:var(--danger-tint);color:var(--danger);margin-bottom:12px;}
+
+  .sheet-actions{display:flex;gap:10px;margin-top:6px;}
+  .sheet-actions button{flex:1;padding:13px;border-radius:var(--radius-s);border:none;font-size:14.5px;font-weight:700;cursor:pointer;}
+  .btn-cancel{background:var(--paper);color:var(--ink-soft);}
+  .btn-save{background:var(--brand);color:#fff;}
+  .btn-danger-outline{width:100%;padding:12px;border-radius:8px;border:1px solid var(--danger);background:var(--danger-tint);color:var(--danger);font-weight:700;font-size:13.5px;cursor:pointer;}
+  .error-msg{color:var(--danger);font-size:12.5px;margin:-4px 0 10px;display:none;font-weight:600;}
+
+  .toast{
+    position:fixed;left:50%;bottom:calc(96px + var(--safe-b));transform:translateX(-50%) translateY(10px);
+    background:var(--ink);color:#fff;padding:10px 16px;border-radius:100px;font-size:13px;font-weight:600;
+    z-index:40;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;box-shadow:0 6px 18px rgba(0,0,0,0.25);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (prefers-reduced-motion: reduce){
+    .sheet{animation:none;}
+    .toast{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="row">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" width="19" height="19"><path d="M3 16V6a1 1 0 0 1 1-1h9v11" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 8h4l3 3v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="17" r="1.8" stroke="#fff" stroke-width="1.6"/><circle cx="17" cy="17" r="1.8" stroke="#fff" stroke-width="1.6"/><path d="M12 2v3M10 3.5h4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h1 id="headerEmpresaNome">Minha Empresa</h1>
+          <p id="headerEmpresaSub">Controle de Descarregamento</p>
+        </div>
+      </div>
+      <button id="installBtn"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Instalar</button>
+    </div>
+  </header>
+
+  <main id="main"></main>
+
+  <button class="fab" id="fabBtn" aria-label="Adicionar">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+  </button>
+
+  <nav class="tabbar">
+    <button data-tab="registros" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8a1 1 0 0 1 1 1v16l-5-3-5 3V4a1 1 0 0 1 1-1Z"/><path d="M9 8h6M9 12h6"/></svg>
+      Cargas
+    </button>
+    <button data-tab="produtos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      Produtos
+    </button>
+    <button data-tab="revendas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V7l8-4 8 4v14"/><path d="M9 21v-6h6v6M9 11h.01M15 11h.01M9 7h.01M15 7h.01"/></svg>
+      Revendas
+    </button>
+    <button data-tab="parceiros">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Z"/><path d="M4 20c.7-3.2 3.6-5.5 8-5.5s7.3 2.3 8 5.5"/></svg>
+      Parceiros
+    </button>
+    <button data-tab="empresa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      Empresa
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modal genérico de cadastro simples -->
+<div class="overlay" id="overlaySimples">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="simplesTitle">Novo</h2>
+    <div class="field"><label id="simplesLabel">Nome</label><input type="text" id="fSimplesNome" placeholder="Digite o nome"></div>
+    <div id="extraCampos"></div>
+    <div class="error-msg" id="simplesError"></div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="cancelSimples">Cancelar</button>
+      <button class="btn-save" id="saveSimples">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Registro/Carga -->
+<div class="overlay" id="overlayRegistro">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="regTitle">Nova Carga</h2>
+    <div class="row2">
+      <div class="field"><label>Data</label><input type="date" id="rData"></div>
+      <div class="field"><label>Nota Fiscal</label><input type="text" id="rNota" placeholder="Nº NF" inputmode="numeric"></div>
+    </div>
+    <div class="field"><label>Quantidade da Nota</label><input type="number" id="rQtdNota" placeholder="Quantidade informada na nota fiscal" min="0" inputmode="numeric"></div>
+    <div class="row2">
+      <div class="field"><label>Revenda</label><select id="rRevenda"></select></div>
+      <div class="field"><label>Turno</label><select id="rTurno"><option value="Manhã">Manhã</option><option value="Tarde">Tarde</option><option value="Noite">Noite</option></select></div>
+    </div>
+    <div class="field"><label>Parceiro / Ajudante</label><select id="rParceiro"></select></div>
+
+    <div class="itens-box">
+      <label>Produtos descarregados</label>
+      <div id="listaProdutosContainer"></div>
+      <button type="button" id="btnAddProdLinha" class="btn-add-linha">+ Adicionar produto</button>
+    </div>
+
+    <div class="field"><label>Observações</label><textarea id="rObs" rows="2" placeholder="Observações sobre esta carga (opcional)"></textarea></div>
+
+    <div class="reg-preview" id="regPreview">
+      <span>Total desta carga</span>
+      <span id="regPreviewVal">0 un</span>
+    </div>
+    <div class="reg-preview parceiro" id="regPreviewParceiro">
+      <span>Total pago ao parceiro/ajudante</span>
+      <span id="regPreviewParceiroVal">R$ 0,00</span>
+    </div>
+
+    <div class="error-msg" id="regError"></div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="cancelReg">Cancelar</button>
+      <button class="btn-save" id="saveReg">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById('installBtn').classList.add('show');
+});
+document.getElementById('installBtn').onclick = async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  document.getElementById('installBtn').classList.remove('show');
+};
+window.addEventListener('appinstalled', () => document.getElementById('installBtn').classList.remove('show'));
+</script>
+
+<script>
+const ICONS = {
+  wpp: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 20l1.3-4A8 8 0 1 1 8.5 19L4 20Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 10c0 2.8 2.2 5 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15v5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+  del: '<svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  pdf: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 13h6M9 17h6M9 9h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  filter: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+  box: '<svg viewBox="0 0 24 24" fill="none"><path d="M21 8 12 3 3 8m18 0-9 5m9-5v8l-9 5m0-8L3 8m9 5v8M3 8v8l9 5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+};
+
+let state = {
+  empresa: { nome: 'Minha Empresa', cnpj: '', telefone: '' },
+  produtos: [],
+  revendas: [],
+  parceiros: [],
+  registros: [],
+  tab: 'registros',
+  editId: null,
+  simplesTipo: null,
+  simplesEditId: null,
+  filtro: { ini: '', fim: '', ativo: false }
+};
+
+const fmtMoeda = (v) => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmtInt = (v) => (Number(v) || 0).toLocaleString('pt-BR');
+const fmtData = (iso) => { if(!iso) return '—'; const p = iso.split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : iso; };
+const plural = (n, s) => `${fmtInt(n)} ${s}${n === 1 ? '' : 's'}`;
+const escapeHtml = (s) => (s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function init() {
+  ['empresa', 'produtos', 'revendas', 'parceiros', 'registros'].forEach(k => {
+    try { const d = localStorage.getItem(k); if (d) state[k] = JSON.parse(d); } catch (e) {}
+  });
+  render();
+}
+function save(k) { localStorage.setItem(k, JSON.stringify(state[k])); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function calcTotaisReg(reg) {
+  let qtd = 0, frete = 0;
+  (reg.itens || []).forEach(it => {
+    const p = state.produtos.find(p => p.id === it.produtoId);
+    qtd += it.qtd;
+    if (p) frete += it.qtd * (p.frete || 0);
+  });
+  return { qtd, frete };
+}
+
+function registrosFiltrados() {
+  let regs = [...state.registros].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  if (state.filtro.ativo && state.filtro.ini && state.filtro.fim) {
+    regs = regs.filter(r => r.data >= state.filtro.ini && r.data <= state.filtro.fim);
+  }
+  return regs;
+}
+
+function render() {
+  document.querySelectorAll('nav.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.tab === state.tab));
+  document.getElementById('headerEmpresaNome').textContent = state.empresa.nome || 'Minha Empresa';
+
+  const main = document.getElementById('main');
+  if (state.tab === 'registros') main.innerHTML = renderRegistrosTab();
+  else if (state.tab === 'produtos') main.innerHTML = renderProdutosLista();
+  else if (state.tab === 'revendas') main.innerHTML = renderSimplesLista('revendas', 'Nenhuma revenda cadastrada.', 'Cadastre as revendas que recebem suas cargas.');
+  else if (state.tab === 'parceiros') main.innerHTML = renderSimplesLista('parceiros', 'Nenhum parceiro cadastrado.', 'Cadastre os ajudantes que participam do descarregamento.');
+  else if (state.tab === 'empresa') main.innerHTML = renderEmpresaForm();
+
+  attachEvents();
+}
+
+function iconEmpty() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>';
+}
+
+function renderRegistrosTab() {
+  const regs = registrosFiltrados();
+  let totQtd = 0, totFrete = 0;
+  regs.forEach(r => { const t = calcTotaisReg(r); totQtd += t.qtd; totFrete += t.frete; });
+
+  let html = `
+    <div class="top-actions">
+      <button class="btn-acao" id="btnFiltro">${ICONS.filter}Período</button>
+      <button class="btn-acao primary" id="btnGerarPdf">${ICONS.pdf}Relatório</button>
+    </div>
+    <div class="filtro-panel" id="filtroPanel">
+      <div class="row2">
+        <div class="field"><label>De</label><input type="date" id="fIni" value="${state.filtro.ini}"></div>
+        <div class="field"><label>Até</label><input type="date" id="fFim" value="${state.filtro.fim}"></div>
+      </div>
+      <div class="filtro-actions">
+        <button id="fLimpar">Limpar</button>
+        <button class="aplicar" id="fAplicar">Aplicar filtro</button>
+      </div>
+    </div>
+    ${state.filtro.ativo ? `<button class="filtro-chip" id="chipFiltro">${ICONS.filter}${fmtData(state.filtro.ini)} – ${fmtData(state.filtro.fim)} · limpar</button>` : ''}
+    <div class="summary">
+      <div class="cell"><div class="num">${fmtInt(regs.length)}</div><div class="lbl">cargas</div></div>
+      <div class="cell"><div class="num">${fmtInt(totQtd)}</div><div class="lbl">unidades</div></div>
+      <div class="cell"><div class="num">${fmtMoeda(totFrete).replace('R$','R$ ')}</div><div class="lbl">frete total</div></div>
+    </div>
+  `;
+
+  if (regs.length === 0) {
+    return html + `<div class="empty">${iconEmpty()}<b>Nenhuma carga por aqui</b>${state.filtro.ativo ? 'Nenhum registro no período selecionado.' : 'Toque no + para registrar a primeira carga.'}</div>`;
+  }
+
+  return html + regs.map(reg => {
+    const rev = state.revendas.find(r => r.id === reg.revendaId)?.nome || '—';
+    const par = state.parceiros.find(p => p.id === reg.parceiroId)?.nome;
+    const { qtd, frete } = calcTotaisReg(reg);
+    const turnoCls = { 'Manhã': 'manha', 'Tarde': 'tarde', 'Noite': 'noite' }[reg.turno] || 'tarde';
+    const prodsHtml = (reg.itens || []).map(i => {
+      const p = state.produtos.find(p => p.id === i.produtoId);
+      return `<div class="prod-item"><span>${p ? p.nome : 'Produto'} <span style="opacity:.6">(${p ? p.medida : 'un'})</span></span><b>${fmtInt(i.qtd)}</b></div>`;
+    }).join('');
+
+    return `
+      <div class="card">
+        <div class="card-top">
+          <div>
+            <div class="card-title">${rev}</div>
+            <div class="card-sub">${fmtData(reg.data)} · NF ${reg.nota || '—'}${reg.qtdNota != null ? ` · Qtd. NF ${fmtInt(reg.qtdNota)}` : ''}</div>
+          </div>
+          <span class="pill ${turnoCls}">${reg.turno || 'Tarde'}</span>
+        </div>
+        <div class="card-body">
+          ${par ? `<div class="card-parceiro">Parceiro: <b>${par}</b></div>` : ''}
+          <div class="itens-list">${prodsHtml}</div>
+          ${reg.observacoes ? `<div class="card-obs">Obs: ${escapeHtml(reg.observacoes)}</div>` : ''}
+        </div>
+        <div class="card-footer">
+          <div class="card-totais">
+            <span>Qtd <b>${fmtInt(qtd)}</b></span>
+            <span>Frete <b>${fmtMoeda(frete)}</b></span>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn wpp" data-action="wpp" data-id="${reg.id}" aria-label="Enviar WhatsApp">${ICONS.wpp}</button>
+            <button class="icon-btn" data-action="edit-reg" data-id="${reg.id}" aria-label="Editar">${ICONS.edit}</button>
+            <button class="icon-btn del" data-action="del-reg" data-id="${reg.id}" aria-label="Excluir">${ICONS.del}</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderProdutosLista() {
+  if (state.produtos.length === 0) {
+    return `<div class="empty">${iconEmpty()}<b>Nenhum produto cadastrado</b>Cadastre os produtos, com frete e premiação, para lançar cargas.</div>`;
+  }
+  return state.produtos.map(item => `
+    <div class="simple-item">
+      <div class="info">
+        <span>${item.nome}</span>
+        <div class="chips">
+          <span class="chip">${item.medida}</span>
+          <span class="chip">Frete ${fmtMoeda(item.frete)}</span>
+          <span class="chip gold">Valor ao parceiro ${fmtMoeda(item.premiacao)}</span>
+        </div>
+      </div>
+      <div class="acts">
+        <button class="icon-btn" data-action="edit-simples" data-key="produtos" data-id="${item.id}" aria-label="Editar">${ICONS.edit}</button>
+        <button class="icon-btn del" data-action="del-simples" data-key="produtos" data-id="${item.id}" aria-label="Excluir">${ICONS.del}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderSimplesLista(k, msg, hint) {
+  if (state[k].length === 0) return `<div class="empty">${iconEmpty()}<b>${msg}</b>${hint || ''}</div>`;
+  return state[k].map(item => `
+    <div class="simple-item">
+      <div class="info"><span>${item.nome}</span></div>
+      <div class="acts">
+        <button class="icon-btn" data-action="edit-simples" data-key="${k}" data-id="${item.id}" aria-label="Editar">${ICONS.edit}</button>
+        <button class="icon-btn del" data-action="del-simples" data-key="${k}" data-id="${item.id}" aria-label="Excluir">${ICONS.del}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderEmpresaForm() {
+  return `
+    <div class="panel">
+      <h2>Dados da sua empresa</h2>
+      <div class="hint">Aparecem no cabeçalho do app e no relatório em PDF.</div>
+      <div class="field"><label>Nome da empresa</label><input type="text" id="empNome" value="${state.empresa.nome || ''}"></div>
+      <div class="field"><label>CNPJ</label><input type="text" id="empCnpj" value="${state.empresa.cnpj || ''}"></div>
+      <div class="field"><label>Telefone / WhatsApp</label><input type="text" id="empTel" value="${state.empresa.telefone || ''}"></div>
+      <button class="btn-save" id="saveEmpresa" style="width:100%;padding:13px;border-radius:8px;border:none;font-weight:700;cursor:pointer;">Salvar dados</button>
+    </div>
+    <div class="panel" style="margin-top:12px;">
+      <h2 style="font-size:14px;">Sobre este app</h2>
+      <div class="about-line"><span>Cadastros</span><span>${plural(state.produtos.length, 'produto')} · ${plural(state.revendas.length, 'revenda')} · ${plural(state.parceiros.length, 'parceiro')}</span></div>
+      <div class="about-line"><span>Cargas registradas</span><span>${state.registros.length}</span></div>
+      <div class="about-line"><span>Armazenamento</span><span>Local, neste aparelho</span></div>
+    </div>
+    <div class="panel" style="margin-top:12px;">
+      <h2 style="font-size:14px;color:var(--danger);">Zona de risco</h2>
+      <div class="hint">Apaga todas as cargas registradas. Produtos, revendas e parceiros cadastrados não são afetados. Essa ação não pode ser desfeita.</div>
+      <button class="btn-danger-outline" id="btnLimparRegistros">Limpar todos os registros de carga</button>
+    </div>
+  `;
+}
+
+function limparRegistros() {
+  if (state.registros.length === 0) { showToast('Não há registros para limpar'); return; }
+  if (!confirm(`Excluir os ${state.registros.length} registro(s) de carga? Essa ação não pode ser desfeita.`)) return;
+  if (!confirm('Confirma? Os cadastros de produtos, revendas e parceiros serão mantidos, só as cargas serão apagadas.')) return;
+  state.registros = [];
+  save('registros');
+  showToast('Registros de carga apagados');
+  render();
+}
+
+function attachEvents() {
+  document.querySelectorAll('nav.tabbar button').forEach(b => b.onclick = () => { state.tab = b.dataset.tab; render(); });
+
+  const fab = document.getElementById('fabBtn');
+  fab.style.display = state.tab === 'empresa' ? 'none' : 'flex';
+  fab.onclick = () => {
+    if (state.tab === 'registros') openRegModal(null);
+    else openSimplesModal(state.tab, null);
+  };
+
+  if (document.getElementById('saveEmpresa')) {
+    document.getElementById('saveEmpresa').onclick = () => {
+      state.empresa.nome = document.getElementById('empNome').value.trim() || 'Minha Empresa';
+      state.empresa.cnpj = document.getElementById('empCnpj').value.trim();
+      state.empresa.telefone = document.getElementById('empTel').value.trim();
+      save('empresa');
+      showToast('Dados da empresa salvos');
+      render();
+    };
+  }
+
+  if (document.getElementById('btnGerarPdf')) document.getElementById('btnGerarPdf').onclick = gerarRelatorioPDF;
+  if (document.getElementById('btnLimparRegistros')) document.getElementById('btnLimparRegistros').onclick = limparRegistros;
+
+  if (document.getElementById('btnFiltro')) {
+    document.getElementById('btnFiltro').onclick = () => document.getElementById('filtroPanel').classList.toggle('show');
+  }
+  if (document.getElementById('fAplicar')) {
+    document.getElementById('fAplicar').onclick = () => {
+      const ini = document.getElementById('fIni').value, fim = document.getElementById('fFim').value;
+      if (!ini || !fim) { showToast('Escolha as duas datas'); return; }
+      if (ini > fim) { showToast('Data inicial depois da final'); return; }
+      state.filtro = { ini, fim, ativo: true };
+      render();
+    };
+  }
+  if (document.getElementById('fLimpar')) {
+    document.getElementById('fLimpar').onclick = () => { state.filtro = { ini: '', fim: '', ativo: false }; render(); };
+  }
+  if (document.getElementById('chipFiltro')) {
+    document.getElementById('chipFiltro').onclick = () => { state.filtro = { ini: '', fim: '', ativo: false }; render(); };
+  }
+
+  document.querySelectorAll('[data-action="edit-simples"]').forEach(b => b.onclick = () => openSimplesModal(b.dataset.key, b.dataset.id));
+  document.querySelectorAll('[data-action="del-simples"]').forEach(b => b.onclick = () => {
+    if (!confirm('Excluir este cadastro?')) return;
+    state[b.dataset.key] = state[b.dataset.key].filter(x => x.id !== b.dataset.id);
+    save(b.dataset.key); showToast('Excluído'); render();
+  });
+  document.querySelectorAll('[data-action="edit-reg"]').forEach(b => b.onclick = () => openRegModal(b.dataset.id));
+  document.querySelectorAll('[data-action="del-reg"]').forEach(b => b.onclick = () => {
+    if (!confirm('Excluir esta carga? Essa ação não pode ser desfeita.')) return;
+    state.registros = state.registros.filter(r => r.id !== b.dataset.id);
+    save('registros'); showToast('Carga excluída'); render();
+  });
+  document.querySelectorAll('[data-action="wpp"]').forEach(b => b.onclick = () => enviarWhatsApp(b.dataset.id));
+}
+
+// ---- Modal Simples ----
+const overlaySimples = document.getElementById('overlaySimples');
+function openSimplesModal(k, id) {
+  state.simplesTipo = k; state.simplesEditId = id;
+  document.getElementById('simplesError').style.display = 'none';
+  const titulo = { produtos: 'produto', revendas: 'revenda', parceiros: 'parceiro' }[k];
+  document.getElementById('simplesTitle').textContent = (id ? 'Editar ' : 'Novo ') + titulo;
+  document.getElementById('simplesLabel').textContent = 'Nome';
+
+  const item = id ? state[k].find(x => x.id === id) : {};
+  document.getElementById('fSimplesNome').value = item.nome || '';
+
+  const extra = document.getElementById('extraCampos');
+  if (k === 'produtos') {
+    extra.innerHTML = `
+      <div class="field"><label>Medida</label><select id="fMedida">
+        <option value="Unidade" ${item.medida === 'Unidade' ? 'selected' : ''}>Unidade</option>
+        <option value="Pacote" ${item.medida === 'Pacote' ? 'selected' : ''}>Pacote</option>
+        <option value="Caixa" ${item.medida === 'Caixa' ? 'selected' : ''}>Caixa</option>
+        <option value="Outro" ${item.medida === 'Outro' ? 'selected' : ''}>Outro</option>
+      </select></div>
+      <div class="row2">
+        <div class="field"><label>Valor frete (R$)</label><input type="number" step="0.01" id="fFrete" value="${item.frete ?? 0}"></div>
+        <div class="field"><label>Valor pago ao parceiro/ajudante (R$)</label><input type="number" step="0.01" id="fPremiacao" value="${item.premiacao ?? 0}"></div>
+      </div>
+    `;
+  } else { extra.innerHTML = ''; }
+  overlaySimples.classList.add('show');
+}
+document.getElementById('cancelSimples').onclick = () => overlaySimples.classList.remove('show');
+document.getElementById('saveSimples').onclick = () => {
+  const nome = document.getElementById('fSimplesNome').value.trim();
+  const errEl = document.getElementById('simplesError');
+  if (!nome) { errEl.textContent = 'Digite o nome.'; errEl.style.display = 'block'; return; }
+  const k = state.simplesTipo, obj = { id: state.simplesEditId || uid(), nome };
+  if (k === 'produtos') {
+    obj.medida = document.getElementById('fMedida').value;
+    obj.frete = Number(document.getElementById('fFrete').value) || 0;
+    obj.premiacao = Number(document.getElementById('fPremiacao').value) || 0;
+  }
+  if (state.simplesEditId) {
+    const idx = state[k].findIndex(x => x.id === state.simplesEditId);
+    state[k][idx] = Object.assign(state[k][idx], obj);
+  } else { state[k].push(obj); }
+  save(k); overlaySimples.classList.remove('show'); showToast('Salvo com sucesso'); render();
+};
+
+// ---- Modal Registro / Carga ----
+const overlayReg = document.getElementById('overlayRegistro');
+function openRegModal(id) {
+  if (state.revendas.length === 0) { showToast('Cadastre uma revenda primeiro'); state.tab = 'revendas'; render(); return; }
+  if (state.produtos.length === 0) { showToast('Cadastre um produto primeiro'); state.tab = 'produtos'; render(); return; }
+
+  state.editId = id;
+  document.getElementById('regTitle').textContent = id ? 'Editar carga' : 'Nova carga';
+  document.getElementById('regError').style.display = 'none';
+
+  const rRev = document.getElementById('rRevenda');
+  const rPar = document.getElementById('rParceiro');
+  rRev.innerHTML = state.revendas.map(r => `<option value="${r.id}">${r.nome}</option>`).join('');
+  rPar.innerHTML = `<option value="">Nenhum</option>` + state.parceiros.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+
+  const reg = id ? state.registros.find(r => r.id === id) : null;
+  document.getElementById('rData').value = reg ? reg.data : new Date().toISOString().slice(0, 10);
+  document.getElementById('rNota').value = reg ? reg.nota : '';
+  document.getElementById('rQtdNota').value = reg && reg.qtdNota != null ? reg.qtdNota : '';
+
+  if (reg && reg.turno) {
+    document.getElementById('rTurno').value = reg.turno;
+  } else {
+    const hora = new Date().getHours();
+    document.getElementById('rTurno').value = hora >= 6 && hora < 12 ? 'Manhã' : hora >= 12 && hora < 18 ? 'Tarde' : 'Noite';
+  }
+
+  if (reg && reg.revendaId) rRev.value = reg.revendaId;
+  if (reg) rPar.value = reg.parceiroId || '';
+  document.getElementById('rObs').value = reg ? (reg.observacoes || '') : '';
+
+  renderProdLinhas(reg ? reg.itens : []);
+  overlayReg.classList.add('show');
+}
+
+function linhaProdutoHTML(it) {
+  return `
+    <div class="prod-linha">
+      <select class="p-sel">${state.produtos.map(p => `<option value="${p.id}" ${p.id === it.produtoId ? 'selected' : ''}>${p.nome}</option>`).join('')}</select>
+      <input type="number" class="p-qtd" value="${it.qtd}" min="1" inputmode="numeric">
+      <button type="button" class="del-linha" aria-label="Remover produto">&times;</button>
+    </div>
+  `;
+}
+
+function renderProdLinhas(itensSalvos) {
+  const container = document.getElementById('listaProdutosContainer');
+  container.innerHTML = '';
+  if (!itensSalvos || itensSalvos.length === 0) itensSalvos = [{ produtoId: state.produtos[0]?.id || '', qtd: 1 }];
+
+  itensSalvos.forEach(it => {
+    const div = document.createElement('div');
+    div.innerHTML = linhaProdutoHTML(it);
+    const linha = div.firstElementChild;
+    linha.querySelector('.del-linha').onclick = () => { linha.remove(); atualizarPreviewCarga(); };
+    linha.querySelector('.p-qtd').oninput = atualizarPreviewCarga;
+    linha.querySelector('.p-sel').onchange = atualizarPreviewCarga;
+    container.appendChild(linha);
+  });
+  atualizarPreviewCarga();
+}
+
+function atualizarPreviewCarga() {
+  let qtd = 0, frete = 0, parceiroVal = 0;
+  document.querySelectorAll('#listaProdutosContainer .prod-linha').forEach(row => {
+    const pid = row.querySelector('.p-sel').value;
+    const q = Number(row.querySelector('.p-qtd').value) || 0;
+    const p = state.produtos.find(p => p.id === pid);
+    qtd += q;
+    if (p) { frete += q * (p.frete || 0); parceiroVal += q * (p.premiacao || 0); }
+  });
+  document.getElementById('regPreviewVal').textContent = `${fmtInt(qtd)} un · ${fmtMoeda(frete)}`;
+  document.getElementById('regPreviewParceiroVal').textContent = fmtMoeda(parceiroVal);
+}
+
+document.getElementById('btnAddProdLinha').onclick = () => {
+  const container = document.getElementById('listaProdutosContainer');
+  const div = document.createElement('div');
+  div.innerHTML = linhaProdutoHTML({ produtoId: state.produtos[0]?.id || '', qtd: 1 });
+  const linha = div.firstElementChild;
+  linha.querySelector('.del-linha').onclick = () => { linha.remove(); atualizarPreviewCarga(); };
+  linha.querySelector('.p-qtd').oninput = atualizarPreviewCarga;
+  linha.querySelector('.p-sel').onchange = atualizarPreviewCarga;
+  container.appendChild(linha);
+  atualizarPreviewCarga();
+};
+
+document.getElementById('cancelReg').onclick = () => overlayReg.classList.remove('show');
+document.getElementById('saveReg').onclick = () => {
+  const itens = [];
+  document.querySelectorAll('#listaProdutosContainer .prod-linha').forEach(row => {
+    itens.push({ produtoId: row.querySelector('.p-sel').value, qtd: Number(row.querySelector('.p-qtd').value) || 0 });
+  });
+  const errEl = document.getElementById('regError');
+  const data = document.getElementById('rData').value;
+
+  if (!data) { errEl.textContent = 'Informe a data.'; errEl.style.display = 'block'; return; }
+  if (itens.length === 0 || itens.every(i => i.qtd <= 0)) { errEl.textContent = 'Adicione ao menos um produto com quantidade.'; errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+
+  const novo = {
+    id: state.editId || uid(),
+    data,
+    nota: document.getElementById('rNota').value.trim(),
+    qtdNota: document.getElementById('rQtdNota').value === '' ? null : Number(document.getElementById('rQtdNota').value) || 0,
+    turno: document.getElementById('rTurno').value,
+    revendaId: document.getElementById('rRevenda').value,
+    parceiroId: document.getElementById('rParceiro').value,
+    observacoes: document.getElementById('rObs').value.trim(),
+    itens: itens.filter(i => i.qtd > 0)
+  };
+
+  if (state.editId) {
+    const idx = state.registros.findIndex(r => r.id === state.editId);
+    state.registros[idx] = novo;
+  } else {
+    state.registros.push(novo);
+  }
+  save('registros'); overlayReg.classList.remove('show'); showToast('Carga salva'); render();
+};
+
+// ---- Relatório PDF ----
+function gerarRelatorioPDF() {
+  const regs = registrosFiltrados();
+
+  const fretesPorRevenda = {}, qtdePorRevendaEProduto = {}, premiacoesPorParceiro = {}, qtdTotalPorParceiro = {};
+  let totalGeralFrete = 0, totalGeralQtd = 0;
+
+  regs.forEach(reg => {
+    const revNome = state.revendas.find(r => r.id === reg.revendaId)?.nome || 'Outra';
+    const parNome = state.parceiros.find(p => p.id === reg.parceiroId)?.nome || 'Sem parceiro';
+
+    fretesPorRevenda[revNome] ??= 0;
+    qtdePorRevendaEProduto[revNome] ??= {};
+    premiacoesPorParceiro[parNome] ??= 0;
+    qtdTotalPorParceiro[parNome] ??= 0;
+
+    (reg.itens || []).forEach(it => {
+      const prod = state.produtos.find(p => p.id === it.produtoId);
+      const nomeProd = prod ? prod.nome : 'Produto excluído';
+      const qtd = it.qtd, subFrete = qtd * (prod ? (prod.frete || 0) : 0);
+      fretesPorRevenda[revNome] += subFrete;
+      totalGeralFrete += subFrete;
+      totalGeralQtd += qtd;
+      qtdePorRevendaEProduto[revNome][nomeProd] = (qtdePorRevendaEProduto[revNome][nomeProd] || 0) + qtd;
+      if (prod) premiacoesPorParceiro[parNome] += qtd * (prod.premiacao || 0);
+      qtdTotalPorParceiro[parNome] += qtd;
+    });
+  });
+
+  const periodoTxt = state.filtro.ativo ? `${fmtData(state.filtro.ini)} a ${fmtData(state.filtro.fim)}` : 'Todos os registros';
+
+  const html = `
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Relatório de Descarregamento — ${state.empresa.nome || ''}</title>
+      <style>
+        @page { margin: 16mm 14mm; }
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 10.5px; color: #16211c; margin: 0; line-height: 1.35; background: #fff; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #123d2e; padding-bottom: 10px; margin-bottom: 4px; }
+        h1 { font-size: 17px; margin: 0; color: #123d2e; font-weight: 800; letter-spacing: -0.01em; }
+        .sub { font-size: 9.5px; color: #5b6b62; margin-top: 4px; }
+        .periodo { font-size: 9.5px; color: #123d2e; font-weight: 700; margin-top: 6px; }
+
+        .destaques { display: flex; gap: 10px; margin: 14px 0; }
+        .destaque-box { flex: 1; background: #f4f5f2; border: 1px solid #e4e7e2; border-left: 4px solid #123d2e; padding: 10px 12px; border-radius: 6px; }
+        .destaque-box.accent { border-left-color: #e8672b; }
+        .destaque-label { font-size: 9px; font-weight: 700; color: #5b6b62; text-transform: uppercase; letter-spacing: 0.03em; }
+        .destaque-valor { font-size: 16px; font-weight: 800; color: #123d2e; margin-top: 3px; }
+
+        .section-title { font-size: 11.5px; font-weight: 800; margin: 18px 0 7px; color: #123d2e; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 1px solid #e4e7e2; padding-bottom: 4px; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 4px; background: #fff; }
+        th, td { border: 1px solid #e4e7e2; padding: 6px 9px; text-align: left; font-size: 9.5px; vertical-align: top; }
+        th { background: #123d2e; color: #fff; font-size: 9px; text-transform: uppercase; letter-spacing: 0.02em; font-weight: 700; }
+        tr { page-break-inside: avoid; }
+        tr:nth-child(even) td { background: #f8f9f7; }
+
+        .text-right { text-align: right; font-variant-numeric: tabular-nums; }
+        .text-center { text-align: center; }
+        .muted { color: #8b988f; }
+        .foot { margin-top: 22px; font-size: 8.5px; color: #8b988f; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <h1>${escapeHtml(state.empresa.nome) || 'Relatório de Operações'}</h1>
+          <div class="sub">CNPJ: ${escapeHtml(state.empresa.cnpj) || '—'} &nbsp;·&nbsp; Tel: ${escapeHtml(state.empresa.telefone) || '—'}</div>
+          <div class="periodo">Período: ${periodoTxt}</div>
+        </div>
+        <div style="text-align:right;" class="sub">
+          Relatório de Descarregamento<br>
+          Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+
+      <div class="destaques">
+        <div class="destaque-box">
+          <div class="destaque-label">Cargas no período</div>
+          <div class="destaque-valor">${fmtInt(regs.length)}</div>
+        </div>
+        <div class="destaque-box">
+          <div class="destaque-label">Unidades descarregadas</div>
+          <div class="destaque-valor">${fmtInt(totalGeralQtd)}</div>
+        </div>
+        <div class="destaque-box accent">
+          <div class="destaque-label">Total geral de frete</div>
+          <div class="destaque-valor">${fmtMoeda(totalGeralFrete)}</div>
+        </div>
+      </div>
+
+      <div class="section-title">Resumo por revenda</div>
+      <table>
+        <thead><tr><th style="width:30%">Revenda</th><th style="width:45%">Itens descarregados</th><th style="width:25%" class="text-right">Valor do frete</th></tr></thead>
+        <tbody>
+          ${Object.keys(qtdePorRevendaEProduto).length === 0 ? '<tr><td colspan="3" class="text-center muted">Nenhum dado no período</td></tr>' :
+            Object.keys(qtdePorRevendaEProduto).sort().map(rev => {
+              const prodsStr = Object.keys(qtdePorRevendaEProduto[rev]).map(p => `${escapeHtml(p)}: <b>${fmtInt(qtdePorRevendaEProduto[rev][p])}</b>`).join('<br>');
+              return `<tr><td><b>${escapeHtml(rev)}</b></td><td>${prodsStr}</td><td class="text-right">${fmtMoeda(fretesPorRevenda[rev] || 0)}</td></tr>`;
+            }).join('')}
+        </tbody>
+      </table>
+
+      <div class="section-title">Resumo do ajudante / parceiro</div>
+      <table>
+        <thead><tr><th style="width:50%">Parceiro</th><th style="width:25%" class="text-right">Quantidade total</th><th style="width:25%" class="text-right">Valor ao parceiro (R$)</th></tr></thead>
+        <tbody>
+          ${Object.keys(qtdTotalPorParceiro).length === 0 ? '<tr><td colspan="3" class="text-center muted">Nenhum dado no período</td></tr>' :
+            Object.keys(qtdTotalPorParceiro).sort().map(par => {
+              return `<tr><td><b>${escapeHtml(par)}</b></td><td class="text-right">${fmtInt(qtdTotalPorParceiro[par] || 0)} un</td><td class="text-right">${fmtMoeda(premiacoesPorParceiro[par] || 0)}</td></tr>`;
+            }).join('')}
+        </tbody>
+      </table>
+
+      <div class="section-title">Histórico de descarregamento</div>
+      <table>
+        <thead><tr><th style="width:11%">Data</th><th style="width:10%">NF</th><th style="width:11%" class="text-right">Qtd. Nota</th><th style="width:20%">Revenda</th><th style="width:16%">Parceiro</th><th style="width:32%">Itens / Qtd</th></tr></thead>
+        <tbody>
+          ${regs.length === 0 ? '<tr><td colspan="6" class="text-center muted">Nenhum registro encontrado</td></tr>' :
+            regs.map(reg => {
+              const rev = state.revendas.find(r => r.id === reg.revendaId)?.nome || '—';
+              const par = state.parceiros.find(p => p.id === reg.parceiroId)?.nome || '—';
+              const itensStr = (reg.itens || []).map(i => {
+                const p = state.produtos.find(prod => prod.id === i.produtoId);
+                return `${escapeHtml(p ? p.nome : 'Produto excluído')}: ${fmtInt(i.qtd)}`;
+              }).join(', ');
+              return `<tr><td>${fmtData(reg.data)}</td><td>${escapeHtml(reg.nota) || '—'}</td><td class="text-right">${reg.qtdNota != null ? fmtInt(reg.qtdNota) : '—'}</td><td><b>${escapeHtml(rev)}</b></td><td>${escapeHtml(par)}</td><td>${itensStr}</td></tr>`;
+            }).join('')}
+        </tbody>
+      </table>
+
+      <div class="foot">Gerado pelo app de Controle de Descarregamento · ${state.empresa.nome || ''}</div>
+    </body>
+    </html>
+  `;
+  imprimirRelatorio(html);
+}
+
+function imprimirRelatorio(html) {
+  const antigo = document.getElementById('relatorioFrame');
+  if (antigo) antigo.remove();
+
+  const iframe = document.createElement('iframe');
+  iframe.id = 'relatorioFrame';
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const limpar = () => { if (iframe.parentNode) iframe.remove(); };
+  iframe.contentWindow.onafterprint = limpar;
+
+  setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(limpar, 2000);
+  }, 250);
+}
+
+// ---- Envio WhatsApp ----
+function enviarWhatsApp(id) {
+  const reg = state.registros.find(r => r.id === id);
+  if (!reg) return;
+  const rev = state.revendas.find(r => r.id === reg.revendaId)?.nome || '—';
+  const par = state.parceiros.find(p => p.id === reg.parceiroId)?.nome;
+
+  const totalGeralQtd = (reg.itens || []).reduce((acc, i) => acc + i.qtd, 0);
+  const itensTxt = (reg.itens || []).map(i => {
+    const p = state.produtos.find(prod => prod.id === i.produtoId);
+    return `• ${p ? p.nome : 'Produto'}: ${fmtInt(i.qtd)}`;
+  }).join('\n');
+
+  const mensagem = `*RELATÓRIO DE DESCARREGAMENTO*\n\n` +
+    `*Revenda:* ${rev}\n` +
+    `*NF:* ${reg.nota || '—'}\n` +
+    (reg.qtdNota != null ? `*Quantidade da NF:* ${fmtInt(reg.qtdNota)}\n` : '') +
+    `*Data:* ${fmtData(reg.data)} (${reg.turno || 'Tarde'})\n` +
+    (par ? `*Parceiro:* ${par}\n\n` : '\n') +
+    `*Produtos:*\n${itensTxt}\n\n` +
+    `*Quantidade total:* ${fmtInt(totalGeralQtd)} un` +
+    (reg.observacoes ? `\n\n*Observações:*\n${reg.observacoes}` : '');
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+}
+
+init();
+</script>
+</body>
+</html>
